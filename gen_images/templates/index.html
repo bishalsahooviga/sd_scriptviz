@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Image</title>
+</head>
+<body>
+    <h1>Generate Image</h1>
+    <!-- Button to generate normal images -->
+    <button id="generate-normal-image">Generate Normal Image</button>
+    <!-- Button to generate ControlNet images -->
+    <button id="generate-controlnet-image">Generate ControlNet Image</button>
+
+    <!-- Form for generating normal images -->
+    <form id="generate-normal-form" style="display: none;">
+        <label for="prompt">Prompt:</label><br>
+        <input type="text" id="prompt" name="prompt" required><br>
+        <label for="sdxl_ckpt">SDXL Checkpoint:</label><br>
+        <input type="text" id="sdxl_ckpt" name="sdxl_ckpt" required><br>
+        <label for="char_lora">CharLORA:</label><br>
+        <input type="text" id="char_lora" name="char_lora" required><br><br>
+        <button type="submit">Generate Image</button>
+    </form>
+
+    <!-- Form for generating ControlNet images -->
+    <form id="generate-controlnet-form" style="display: none;">
+        <label for="prompt">Prompt:</label><br>
+        <input type="text" id="prompt-controlnet" name="prompt" required><br>
+        <label for="sdxl_ckpt">SDXL Checkpoint:</label><br>
+        <input type="text" id="sdxl_ckpt-controlnet" name="sdxl_ckpt" required><br>
+        <label for="controlnet_ckpt">ControlNet Checkpoint:</label><br>
+        <input type="text" id="controlnet_ckpt" name="controlnet_ckpt" required><br>
+        <label for="controlnet_conditioning_scale">ControlNet Conditioning Scale:</label><br>
+        <input type="text" id="controlnet_conditioning_scale" name="controlnet_conditioning_scale" required><br>
+        <label for="image">Image:</label><br>
+        <input type="text" id="image" name="image" required><br><br>
+        <input type="text" id="type" name="type" required><br><br>
+        <button type="submit">Generate ControlNet Image</button>
+    </form>
+
+    <div id="loading" style="display: none;">Loading...</div>
+    <div id="image-container" style="display: none;"></div>
+
+    <script>
+        // Function to show or hide forms based on button click
+        function toggleForms(formToShow) {
+            document.getElementById("generate-normal-form").style.display = "none";
+            document.getElementById("generate-controlnet-form").style.display = "none";
+            document.getElementById(formToShow).style.display = "block";
+        }
+
+        // Event listener for generating normal images button
+        document.getElementById("generate-normal-image").addEventListener("click", function() {
+            toggleForms("generate-normal-form");
+        });
+
+        // Event listener for generating ControlNet images button
+        document.getElementById("generate-controlnet-image").addEventListener("click", function() {
+            toggleForms("generate-controlnet-form");
+        });
+
+        // Event listener for normal image form submission
+        document.getElementById("generate-normal-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            document.getElementById("loading").style.display = "block";
+            fetch('/generate-image', {
+                method: 'POST',
+                body: JSON.stringify({
+                    prompt: formData.get('prompt'),
+                    sdxl_ckpt: formData.get('sdxl_ckpt'),
+                    char_lora: formData.get('char_lora')
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                setTimeout(function() {
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("image-container").innerHTML = `<img src="${data.image_path}" alt="Generated Image">`;
+                    document.getElementById("image-container").style.display = "block";
+                }, 1000); // Wait for 1 second before showing the image
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("loading").style.display = "none";
+            });
+        });
+
+        // Event listener for ControlNet image form submission
+        document.getElementById("generate-controlnet-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+            document.getElementById("loading").style.display = "block";
+            fetch('/generate-controlnet-image', {
+                method: 'POST',
+                body: JSON.stringify({
+                    prompt: formData.get('prompt'),
+                    sdxl_ckpt: formData.get('sdxl_ckpt'),
+                    controlnet_ckpt: formData.get('controlnet_ckpt'),
+                    controlnet_conditioning_scale: formData.get('controlnet_conditioning_scale'),
+                    image: formData.get('image')
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                setTimeout(function() {
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("image-container").innerHTML = `<img src="${data.image_path}" alt="Generated ControlNet Image">`;
+                    document.getElementById("image-container").style.display = "block";
+                }, 1000); // Wait for 1 second before showing the image
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById("loading").style.display = "none";
+            });
+        });
+    </script>
+</body>
+</html>
